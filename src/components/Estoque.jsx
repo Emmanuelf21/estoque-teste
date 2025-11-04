@@ -13,12 +13,12 @@ const Estoque = () => {
         preco: ''
     })
     const [editId, setEditId] = useState(null)
-    const fetchHistorico = async () =>{
+    const fetchHistorico = async () => {
         try {
             const res = await fetch("http://localhost:5000/movimentacoes")
             const data = await res.json()
             setMovimentacoes(data)
-        }catch(err){
+        } catch (err) {
             console.error("Erro ao carregar histórico: ", err)
         }
     }
@@ -102,6 +102,51 @@ const Estoque = () => {
         }
     }
 
+    // Novo estado
+    const [formMov, setFormMov] = useState({
+        fk_produto: '',
+        tipo_movimentacao: 'entrada',
+        qtd_movimentada: '',
+        custo_total: '',
+        fk_usuario: 1 // Exemplo — pode vir do login do usuário
+    })
+
+    // Atualizar campos do formulário de movimentação
+    const handleChangeMov = (e) => {
+        setFormMov({ ...formMov, [e.target.name]: e.target.value })
+    }
+
+    // Enviar movimentação
+    const handleSubmitMovimentacao = async (e) => {
+        e.preventDefault()
+        try {
+            const res = await fetch("http://localhost:5000/movimentacoes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fk_produto: parseInt(formMov.fk_produto),
+                    tipo_movimentacao: formMov.tipo_movimentacao,
+                    qtd_movimentada: parseFloat(formMov.qtd_movimentada),
+                    custo_total: parseFloat(formMov.custo_total),
+                    fk_usuario: formMov.fk_usuario,
+                    data_movimentacao: new Date().toISOString().split("T")[0]
+                })
+            })
+
+            if (res.ok) {
+                alert("Movimentação registrada com sucesso!")
+                setFormMov({ fk_produto: '', tipo_movimentacao: 'entrada', qtd_movimentada: '', custo_total: '', fk_usuario: 1 })
+                fetchHistorico()
+                fetchProdutos()
+            } else {
+                const err = await res.json()
+                alert(`Erro ao registrar movimentação: ${err.error || res.statusText}`)
+            }
+        } catch (error) {
+            console.error("Erro ao salvar movimentação:", error)
+        }
+    }
+
     return (
         <div className="estoque-container">
             <section className="secao-produtos">
@@ -160,6 +205,42 @@ const Estoque = () => {
             {/* 🧾 Tabela de movimentações (mantida e estilizada, mas sem lógica ainda) */}
             <section className="secao-movimentacao">
                 <h2>📊 Movimentações</h2>
+                <form className="form-movimentacao" onSubmit={handleSubmitMovimentacao}>
+                    <select name="fk_produto" value={formMov.fk_produto} onChange={handleChangeMov} required>
+                        <option value="">Selecione um produto</option>
+                        {produtos.map((p) => (
+                            <option key={p.id} value={p.id}>{p.nome}</option>
+                        ))}
+                    </select>
+
+                    <select name="tipo_movimentacao" value={formMov.tipo_movimentacao} onChange={handleChangeMov}>
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saída</option>
+                    </select>
+
+                    <input
+                        name="qtd_movimentada"
+                        type="number"
+                        step="1"
+                        placeholder="Quantidade"
+                        value={formMov.qtd_movimentada}
+                        onChange={handleChangeMov}
+                        required
+                    />
+
+                    <input
+                        name="custo_total"
+                        type="number"
+                        step="0.01"
+                        placeholder="Custo total"
+                        value={formMov.custo_total}
+                        onChange={handleChangeMov}
+                        required
+                    />
+
+                    <button type="submit">Registrar</button>
+                </form>
+
                 <table className="tabela-movimentacao">
                     <thead>
                         <tr>
