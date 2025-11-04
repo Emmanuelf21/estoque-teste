@@ -1,130 +1,215 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
-from flask_cors import CORS  # importar CORS
-
-from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
-from models import db, Produto, Historico
-import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-db.init_app(app)
-CORS(app, resources={r"/*": {"origins": "*"}})
+DB_USER = 'postgres'
+DB_PASS = 'senai103'
+DB_HOST = 'localhost'
+DB_NAME = 'saep_db'
+DB_PORT = '5432'
 
-with app.app_context():
-    db.create_all()
-
-
-# Configuração do banco de dados PostgreSQL
-db_config = {
-    'host': 'localhost',
-    'dbname': 'saep_db',
-    'user': 'postgres',
-    'password': 'senai103',
-    'port': 5432
-}
+def get_connection():
+    return psycopg2.connect(
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS,
+        host=DB_HOST,
+        port=DB_PORT
+    )
 
 @app.route('/login', methods=['POST'])
-def verificar_login():
-    dados = request.get_json()
-    email = dados.get('email')
-    senha = dados.get('senha')
-
-    if not email or not senha:
-        return jsonify({'detail': 'Informe email e senha'}), 400
-
+def login():
     try:
-        conexao = psycopg2.connect(**db_config)
-        cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        email = data.get('email')
+        senha = data.get('senha')
 
-        query = "SELECT * FROM login WHERE email = %s AND senha = %s"
-        cursor.execute(query, (email, senha))
-        usuario = cursor.fetchone()
+        # checagem básica
+        if not email or not senha:
+            return jsonify({'detail': 'Email e senha são obrigatórios'}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id_login, email
+            FROM login
+            WHERE email = %s AND senha = %s
+        """, (email, senha))
+
+        user = cursor.fetchone()
 
         cursor.close()
-        conexao.close()
+        conn.close()
 
-        if usuario:
-            return jsonify({'msg': 'Usuário verificado com sucesso', 'id_login': usuario['id_login']}), 200
+        if user:
+            return jsonify({'msg': 'Login efetuado com sucesso'}), 200
         else:
-            return jsonify({'detail': 'Email ou senha incorretos'}), 401
+            return jsonify({'detail': 'Usuário ou senha inválidos'}), 401
 
     except Exception as e:
-        print("Erro:", e)
-        return jsonify({'detail': 'Erro no servidor'}), 500
+        print("❌ ERRO NO LOGIN:", e)  # <-- aparece no terminal Flask
+        return jsonify({'detail': 'Erro interno no servidor', 'erro': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True, port=8000)  # porta 8000 para combinar com seu fetch
+@app.route('/movimentacoes', methods=['GET'])
+def listar_movimentacoes():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
+        cursor.execute("""
+            SELECT 
+                h.id_historico AS id,
+                p.nome AS produto,
+                l.email AS usuario,
+                h.qtd_movimentada AS quantidade,
+                h.tipo_movimentacao AS movimentacao,
+                TO_CHAR(h.data_movimentacao, 'DD/MM/YYYY') AS data,
+                h.custo_total
+            FROM historico h
+            JOIN produto p ON p.id_produto = h.fk_produto
+            JOIN login l ON l.id_login = h.fk_usuario
+            ORDER BY h.data_movimentacao DESC;
+        """)
 
-# app.py
+        movimentacoes = cursor.fetchall()
 
-# ——— Endpoints para Produto ———
+        cursor.close()
+        conn.close()
+
+        return jsonify(movimentacoes), 200
+
+    except Exception as e:
+        print("❌ ERRO AO LISTAR MOVIMENTAÇÕES:", e)
+        return jsonify({'error': 'Erro ao buscar movimentações', 'detalhes': str(e)}), 500
 
 @app.route('/produtos', methods=['GET'])
-def get_produtos():
-    produtos = Produto.query.all()
-    return jsonify([p.to_dict() for p in produtos]), 200
+def listar_produtos():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-@app.route('/produtos/<int:id_produto>', methods=['GET'])
-def get_produto(id_produto):
-    p = Produto.query.get_or_404(id_produto)
-    return jsonify(p.to_dict()), 200
+        cursor.execute("""
+            SELECT 
+                id_produto AS id,
+                nome,
+                preco_unit AS preco,
+                quantidade AS qtd,
+                qtd_minima AS qtd_min,
+                qtd_maxima AS qtd_max                
+            FROM produto
+        """)
+        produtos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(produtos), 200
+
+    except Exception as e:
+        print("❌ ERRO AO LISTAR FILMES:", e)
+        return jsonify({'error': 'Erro ao buscar produtos', 'detalhes': str(e)}), 500
 
 @app.route('/produtos', methods=['POST'])
-def create_produto():
-    data = request.get_json()
+def criar_produto():
     try:
-        novo = Produto(
-            nome = data['nome'],
-            quantidade_min = data['quantidade_min'],
-            quantidade = data['quantidade'],
-            quantidade_max = data['quantidade_max'],
-            preco_unit = data['preco_unit']
-        )
-        db.session.add(novo)
-        db.session.commit()
-        return jsonify(novo.to_dict()), 201
+        data = request.get_json()
+        nome = data.get('nome')
+        preco = data.get('preco')
+        qtd = data.get('qtd')
+        qtd_min = data.get('qtd_min')
+        qtd_max = data.get('qtd_max')
+
+        if not nome or preco is None:
+            return jsonify({'error': 'Nome e preço são obrigatórios'}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO produto (nome, preco_unit, quantidade, qtd_minima, qtd_maxima)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (nome, preco, qtd, qtd_min, qtd_max))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'msg': 'Produto criado com sucesso'}), 201
+
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 400
+        print("❌ ERRO AO CRIAR PRODUTO:", e)
+        return jsonify({'error': 'Erro ao criar produto', 'detalhes': str(e)}), 500
 
-# @app.route('/produtos/<int:id_produto>', methods=['PUT'])
-# def update_produto(id_produto):
-#     data = request.get_json()
-#     p = Produto.query.get_or_404(id_produto)
-#     try:
-#         p.nome = data.get('nome', p.nome)
-#         p.quantidade_min = data.get('quantidade_min', p.quantidade_min)
-#         p.quantidade = data.get('quantidade', p.quantidade)
-#         p.quantidade_max = data.get('quantidade_max', p.quantidade_max)
-#         p.preco_unit = data.get('preco_unit', p.preco_unit)
-#         db.session.commit()
-#         return jsonify(p.to_dict()), 200
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({'error': str(e)}), 400
+# ==========================================================
+# 🔹 PUT - Atualizar produto existente
+# ==========================================================
+@app.route('/produtos/<int:id_produto>', methods=['PUT'])
+def atualizar_produto(id_produto):
+    try:
+        data = request.get_json()
+        nome = data.get('nome')
+        preco = data.get('preco')
+        qtd = data.get('qtd')
+        qtd_min = data.get('qtd_min')
+        qtd_max = data.get('qtd_max')
 
-# @app.route('/produtos/<int:id_produto>', methods=['DELETE'])
-# def delete_produto(id_produto):
-#     p = Produto.query.get_or_404(id_produto)
-#     try:
-#         db.session.delete(p)
-#         db.session.commit()
-#         return jsonify({'message': 'Produto deletado'}), 200
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({'error': str(e)}), 400
+        conn = get_connection()
+        cursor = conn.cursor()
 
-# # ——— Endpoint para histórico / movimentações ———
+        cursor.execute("""
+            UPDATE produto
+            SET nome = %s,
+                preco_unit = %s,
+                quantidade = %s,
+                qtd_minima = %s,
+                qtd_maxima = %s
+            WHERE id_produto = %s
+        """, (nome, preco, qtd, qtd_min, qtd_max, id_produto))
 
-# @app.route('/historico', methods=['GET'])
-# def get_historico():
-#     registros = Historico.query.all()
-#     return jsonify([h.to_dict() for h in registros]), 200
+        conn.commit()
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=8000)
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Produto não encontrado'}), 404
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'msg': 'Produto atualizado com sucesso'}), 200
+
+    except Exception as e:
+        print("❌ ERRO AO ATUALIZAR PRODUTO:", e)
+        return jsonify({'error': 'Erro ao atualizar produto', 'detalhes': str(e)}), 500
+
+
+# ==========================================================
+# 🔹 DELETE - Excluir produto
+# ==========================================================
+@app.route('/produtos/<int:id_produto>', methods=['DELETE'])
+def excluir_produto(id_produto):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM produto WHERE id_produto = %s", (id_produto,))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Produto não encontrado'}), 404
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'msg': 'Produto excluído com sucesso'}), 200
+
+    except Exception as e:
+        print("❌ ERRO AO EXCLUIR PRODUTO:", e)
+        return jsonify({'error': 'Erro ao excluir produto', 'detalhes': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)

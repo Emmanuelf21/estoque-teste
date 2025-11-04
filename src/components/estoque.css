@@ -1,0 +1,114 @@
+.estoque-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background-color: #f4f6f8;
+    min-height: 100vh;
+    margin: auto;
+    gap: 5rem;
+  }
+  
+  .secao-produtos, .secao-movimentacao {
+    width: 90%;
+    max-width: 1000px;
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .secao-produtos h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+  }
+  
+  /* Formulário */
+  .form-produto {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+  
+  .form-produto input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 180px;
+  }
+  
+  .form-produto button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  
+  .form-produto button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Tabela */
+  .tabela-produtos, .tabela-movimentacao{
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .tabela-produtos th, .tabela-produtos td, .tabela-movimentacao th, .tabela-movimentacao td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .tabela-produtos th, .tabela-movimentacao th {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .estoque-baixo {
+    background-color: #ffecec;
+  }
+  
+  .alerta {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .ok {
+    color: green;
+  }
+  
+  .btn-editar {
+    background-color: #ffc107;
+    border: none;
+    color: #000;
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .btn-deletar {
+    background-color: #dc3545;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .btn-editar:hover {
+    background-color: #e0a800;
+  }
+  
+  .btn-deletar:hover {
+    background-color: #c82333;
+  }
+  
