@@ -1,70 +1,80 @@
-.container{
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border: 1px solid blue;
-  border-radius: 18px 18px 0px 0px;
-  padding-bottom: 12px;
-  gap: 12px;
+/* Container principal */
+.container {
+  width: 100%;
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.container .header-login{
-  background-color: blue;
-  height: fit-content;
-  padding: 0;
-  width: 100%;
+/* Cabeçalho do login */
+.header-login {
   text-align: center;
-  color: white;
-  border-radius: 16px 16px 0px 0px;
+  margin-bottom: 25px;
 }
 
-.header-login h1{
-  padding: 0;
+.header-login h1 {
+  font-size: 1.8rem;
+  color: #343a40;
 }
 
-.formulario{
-  width: 100%;
+/* Formulário */
+.formulario {
   display: flex;
   flex-direction: column;
-  margin: auto;
-  align-items: center;
-  gap: 10px;
 }
 
-.container-input{
+/* Container dos inputs */
+.container-input {
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  width: 80%;
-}
-.container-input label{
-  font-size: 1.2rem;
 }
 
-.container-input input{
-  width: 100%;
-  height: 2rem;
-  border-radius: 8px;
-  border: 2px solid rgba(128, 128, 128, 0.60);
-  padding: 4px 6px;
-  font-size: 1.1rem;
+.container-input label {
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #495057;
 }
 
-.btn-entrar{
-  background-color: blue;
-  color: white;
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
+.container-input input {
+  padding: 10px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
   font-size: 1rem;
-  border: none;
+  transition: 0.3s;
 }
 
-.btn-entrar:hover{
-  background-color: rgb(0, 0, 184);
+.container-input input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0,123,255,0.3);
+}
+
+/* Botão de entrar */
+.btn-entrar {
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-entrar:hover {
+  background-color: #0056b3;
+}
+
+/* Mensagem de erro ou sucesso */
+.formulario p {
+  margin-top: 15px;
+  text-align: center;
+  color: #dc3545; /* vermelho para erro, pode ajustar dinamicamente */
+  font-weight: 500;
 }
