@@ -1,10 +1,7 @@
-/* Fundo da página (opcional, mas recomendado) */
+/* Fundo da página */
 body {
   background:#2b2b2b;
   height: fit-content;
-  /* display: flex;
-  justify-content: center;
-  align-items: center; */
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -16,10 +13,10 @@ body {
   backdrop-filter: blur(12px);
   border-radius: 18px;
 
-  position: absolute;    /* 👈 troca para absolute */
+  position: absolute;   
   top: 50%;
   left: 50%;
-  translate: -50% -50%;  /* 👈 centralização correta */
+  translate: -50% -50%; 
 
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);

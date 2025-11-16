@@ -1,15 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
-import psycopg2.extras
 from psycopg2 import sql
+import psycopg2.extras
 from datetime import date
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 DB_USER = 'postgres'
-DB_PASS = 'Franco2001'
+DB_PASS = 'senai103'
 DB_HOST = 'localhost'
 DB_NAME = 'saep_db'
 DB_PORT = '5432'
@@ -54,7 +54,7 @@ def login():
             return jsonify({'detail': 'Usuário ou senha inválidos'}), 401
 
     except Exception as e:
-        print("❌ ERRO NO LOGIN:", e)  # <-- aparece no terminal Flask
+        print(" ERRO NO LOGIN:", e)  # <-- aparece no terminal Flask
         return jsonify({'detail': 'Erro interno no servidor', 'erro': str(e)}), 500
 
 @app.route('/movimentacoes', methods=['GET'])
@@ -86,7 +86,7 @@ def listar_movimentacoes():
         return jsonify(movimentacoes), 200
 
     except Exception as e:
-        print("❌ ERRO AO LISTAR MOVIMENTAÇÕES:", e)
+        print(" ERRO AO LISTAR MOVIMENTAÇÕES:", e)
         return jsonify({'error': 'Erro ao buscar movimentações', 'detalhes': str(e)}), 500
 
 @app.route('/produtos', methods=['GET'])
@@ -113,7 +113,7 @@ def listar_produtos():
         return jsonify(produtos), 200
 
     except Exception as e:
-        print("❌ ERRO AO LISTAR FILMES:", e)
+        print(" ERRO AO LISTAR FILMES:", e)
         return jsonify({'error': 'Erro ao buscar produtos', 'detalhes': str(e)}), 500
 
 @app.route('/produtos', methods=['POST'])
@@ -145,11 +145,11 @@ def criar_produto():
         return jsonify({'msg': 'Produto criado com sucesso'}), 201
 
     except Exception as e:
-        print("❌ ERRO AO CRIAR PRODUTO:", e)
+        print(" ERRO AO CRIAR PRODUTO:", e)
         return jsonify({'error': 'Erro ao criar produto', 'detalhes': str(e)}), 500
 
 # ==========================================================
-# 🔹 PUT - Atualizar produto existente
+#  PUT - Atualizar produto existente
 # ==========================================================
 @app.route('/produtos/<int:id_produto>', methods=['PUT'])
 def atualizar_produto(id_produto):
@@ -185,12 +185,12 @@ def atualizar_produto(id_produto):
         return jsonify({'msg': 'Produto atualizado com sucesso'}), 200
 
     except Exception as e:
-        print("❌ ERRO AO ATUALIZAR PRODUTO:", e)
+        print(" ERRO AO ATUALIZAR PRODUTO:", e)
         return jsonify({'error': 'Erro ao atualizar produto', 'detalhes': str(e)}), 500
 
 
 # ==========================================================
-# 🔹 DELETE - Excluir produto
+#  DELETE - Excluir produto
 # ==========================================================
 @app.route('/produtos/<int:id_produto>', methods=['DELETE'])
 def excluir_produto(id_produto):
@@ -210,7 +210,7 @@ def excluir_produto(id_produto):
         return jsonify({'msg': 'Produto excluído com sucesso'}), 200
 
     except Exception as e:
-        print("❌ ERRO AO EXCLUIR PRODUTO:", e)
+        print(" ERRO AO EXCLUIR PRODUTO:", e)
         return jsonify({'error': 'Erro ao excluir produto', 'detalhes': str(e)}), 500
 
 
@@ -232,7 +232,7 @@ def inserir_movimentacao():
         conn = get_connection()
         cur = conn.cursor()
 
-        # 🔹 1. Inserir registro no histórico
+        #  1. Inserir registro no histórico
         insert_query = sql.SQL("""
             INSERT INTO historico
             (fk_produto, tipo_movimentacao, qtd_movimentada, custo_total, fk_usuario, data_movimentacao)
@@ -249,7 +249,7 @@ def inserir_movimentacao():
         ))
         novo_id = cur.fetchone()[0]
 
-        # 🔹 2. Atualizar quantidade do produto
+        #  2. Atualizar quantidade do produto
         if tipo_movimentacao.lower() == "entrada":
             update_query = """
                 UPDATE produto
@@ -278,7 +278,7 @@ def inserir_movimentacao():
         }), 201
 
     except Exception as e:
-        print("❌ Erro ao inserir movimentação:", e)
+        print(" Erro ao inserir movimentação:", e)
         return jsonify({"error": "Erro ao salvar movimentação"}), 500
     
 if __name__ == '__main__':

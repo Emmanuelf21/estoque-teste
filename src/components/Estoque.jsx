@@ -14,6 +14,7 @@ const Estoque = () => {
     })
     const [editId, setEditId] = useState(null)
     const fetchHistorico = async () => {
+    const fetchHistorico = async () => {
         try {
             const res = await fetch("http://localhost:5000/movimentacoes")
             const data = await res.json()
@@ -282,6 +283,7 @@ const Estoque = () => {
 
         </div>
     )
+}
 }
 
 export default Estoque
