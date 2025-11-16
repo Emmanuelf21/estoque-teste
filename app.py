@@ -2,12 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
+from psycopg2 import sql
+from datetime import date
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 DB_USER = 'postgres'
-DB_PASS = 'senai103'
+DB_PASS = 'Franco2001'
 DB_HOST = 'localhost'
 DB_NAME = 'saep_db'
 DB_PORT = '5432'
@@ -211,5 +213,73 @@ def excluir_produto(id_produto):
         print("❌ ERRO AO EXCLUIR PRODUTO:", e)
         return jsonify({'error': 'Erro ao excluir produto', 'detalhes': str(e)}), 500
 
+
+@app.route("/movimentacoes", methods=["POST"])
+def inserir_movimentacao():
+    data = request.get_json()
+
+    fk_produto = data.get("fk_produto")
+    tipo_movimentacao = data.get("tipo_movimentacao")
+    qtd_movimentada = data.get("qtd_movimentada")
+    custo_total = data.get("custo_total")
+    fk_usuario = data.get("fk_usuario")
+    data_movimentacao = data.get("data_movimentacao", str(date.today()))
+
+    if not all([fk_produto, tipo_movimentacao, qtd_movimentada, custo_total, fk_usuario]):
+        return jsonify({"error": "Todos os campos são obrigatórios"}), 400
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # 🔹 1. Inserir registro no histórico
+        insert_query = sql.SQL("""
+            INSERT INTO historico
+            (fk_produto, tipo_movimentacao, qtd_movimentada, custo_total, fk_usuario, data_movimentacao)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id_historico;
+        """)
+        cur.execute(insert_query, (
+            fk_produto,
+            tipo_movimentacao,
+            qtd_movimentada,
+            custo_total,
+            fk_usuario,
+            data_movimentacao
+        ))
+        novo_id = cur.fetchone()[0]
+
+        # 🔹 2. Atualizar quantidade do produto
+        if tipo_movimentacao.lower() == "entrada":
+            update_query = """
+                UPDATE produto
+                SET quantidade = quantidade + %s
+                WHERE id_produto = %s;
+            """
+        elif tipo_movimentacao.lower() == "saida":
+            update_query = """
+                UPDATE produto
+                SET quantidade = quantidade - %s
+                WHERE id_produto = %s;
+            """
+        else:
+            conn.rollback()
+            return jsonify({"error": "Tipo de movimentação inválido"}), 400
+
+        cur.execute(update_query, (qtd_movimentada, fk_produto))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "message": "Movimentação inserida e estoque atualizado com sucesso!",
+            "id_historico": novo_id
+        }), 201
+
+    except Exception as e:
+        print("❌ Erro ao inserir movimentação:", e)
+        return jsonify({"error": "Erro ao salvar movimentação"}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)
