@@ -36,6 +36,17 @@ O histórico deve conter qual produto foi alterado, qual foi o usuário que fez 
 
 
 # Conectar ao banco criado antes de criar as tabelas:
+
+Alterar as configurações do banco no 'app.py' de acordo com as suas configurações
+```
+# CONFIGURAÇÕS DO BANCO
+DB_USER = 'postgres'
+DB_PASS = 'senai103'
+DB_HOST = 'localhost'
+DB_NAME = 'saep_db'
+DB_PORT = '5432'
+```
+
 CREATE DATABASE saep_db;
 
 -- Tabela de Login
